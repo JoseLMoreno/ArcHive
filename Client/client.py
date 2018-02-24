@@ -16,7 +16,7 @@ class ConnectAgent(base_agent.BaseAgent):
         self.connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.connection.connect((target,port))
         self.id = self.connection.recv(8)
-        print(self.id.decode())
+        print(sys.getsizeof(int))
 
     def step(self, obs):
         super(ConnectAgent,self)
@@ -29,6 +29,5 @@ class ConnectAgent(base_agent.BaseAgent):
         #     logfile.write(str(obs))
         readSize = int(self.connection.recv(sys.getsizeof(int)))
         action = pickle.loads(self.connection.recv(readSize))
-        print(readSize,'\n',action)
 
         return action

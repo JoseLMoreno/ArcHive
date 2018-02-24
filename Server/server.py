@@ -1,6 +1,6 @@
 # import sys
 # sys.path.insert(0,'./pysc2-tutorial/Building a Sparse Reward Agent')
-import socket, pickle, sys
+import socket, pickle, sys, time
 import threading
 from agents.sparse_agent import SparseAgent
 
@@ -33,6 +33,7 @@ def handle_client_connection(client_socket):
         action = pickle.dumps(action)
         readSize = sys.getsizeof(action)
         client_socket.send(str(sys.getsizeof(action)).encode())
+        time.sleep(0.007)
         print(readSize)
         client_socket.sendall(action)
         obs = None
