@@ -24,17 +24,19 @@ def handle_client_connection(client_socket):
     # while True:
     while True:
         readSize = int(client_socket.recv(sys.getsizeof(int)))
-        print(readSize)
+        # print(readSize)
         chunk = client_socket.recv(readSize)
+        while (sys.getsizeof(chunk) < readSize):
+            chunk += client_socket.recv(readSize)
         obs = pickle.loads(chunk)
-        print('sending')
+        # print('sending')
         action = agent.step(obs)
-        print(action)
+        # print(action)
         action = pickle.dumps(action)
         readSize = sys.getsizeof(action)
         client_socket.send(str(sys.getsizeof(action)).encode())
-        time.sleep(0.007)
-        print(readSize)
+        time.sleep(0.01)
+        # print(readSize)
         client_socket.sendall(action)
         obs = None
     # print(obs)
