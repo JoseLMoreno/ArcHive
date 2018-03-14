@@ -2,6 +2,7 @@
 # sys.path.insert(0,'./pysc2-tutorial/Building a Sparse Reward Agent')
 import socket, pickle, sys, time
 import threading
+import connection
 from agents.sparse_agent import SparseAgent
 
 bind_ip = 'localhost'
@@ -18,6 +19,7 @@ print ('Listening on {}:{}'.format(bind_ip, bind_port))
 def handle_client_connection(client_socket):
     client_socket.send(str(threading.get_ident()).encode())
     print(threading.get_ident())
+    step = 0
     # chunk = client_socket.recv(4096)
     # obs = chunk
     # print(chunk)
@@ -30,8 +32,13 @@ def handle_client_connection(client_socket):
             chunk += client_socket.recv(readSize)
         obs = pickle.loads(chunk)
         # print('sending')
+        if obs.last():
+            # print(obs)
+            # print(obs.reward, obs.observation['score_cumulative'])
+            # for things in obs.observation:
+            #     print(things, obs.observation[things])
+            connection.PostGame(obs)
         action = agent.step(obs)
-        # print(action)
         action = pickle.dumps(action)
         readSize = sys.getsizeof(action)
         client_socket.send(str(sys.getsizeof(action)).encode())
@@ -39,6 +46,7 @@ def handle_client_connection(client_socket):
         # print(readSize)
         client_socket.sendall(action)
         obs = None
+        step += 1
     # print(obs)
 
 while True:
