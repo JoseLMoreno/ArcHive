@@ -4,10 +4,11 @@ import socket, pickle, sys, time
 import threading
 import connection
 from agents.sparse_agent import SparseAgent
+from agents.smart_agent import SmartAgent
 
 bind_ip = 'localhost'
 bind_port = 2323
-agent = SparseAgent()
+
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.bind((bind_ip,bind_port))
@@ -17,27 +18,38 @@ server.listen(5)  # max backlog of connections
 print ('Listening on {}:{}'.format(bind_ip, bind_port))
 
 def handle_client_connection(client_socket):
-    client_socket.send(str(threading.get_ident()).encode())
+    agent = None
+    agentid = None
+    readSize = int(client_socket.recv(sys.getsizeof(int)))
+    chunk = client_socket.recv(readSize)
+    while (sys.getsizeof(chunk) < readSize):
+        chunk += client_socket.recv(readSize)
+    chunk = chunk.decode()
+    print(chunk)
+    if chunk == "Sparse Agent":
+        agent = SparseAgent()
+        agentid = 1
+    elif chunk == "QTable Agent":
+        agent = SmartAgent()
+        agentid = 2
+    history = connection.GameHistory(chunk)
+    
+    history = pickle.dumps(history)
+    print(history)
+    readSize = sys.getsizeof(history)
+    client_socket.send(str(readSize).encode())
+    time.sleep(0.01)
+    client_socket.send(history)
     print(threading.get_ident())
-    step = 0
-    # chunk = client_socket.recv(4096)
-    # obs = chunk
-    # print(chunk)
-    # while True:
+
     while True:
         readSize = int(client_socket.recv(sys.getsizeof(int)))
-        # print(readSize)
         chunk = client_socket.recv(readSize)
         while (sys.getsizeof(chunk) < readSize):
             chunk += client_socket.recv(readSize)
         obs = pickle.loads(chunk)
-        # print('sending')
         if obs.last():
-            # print(obs)
-            # print(obs.reward, obs.observation['score_cumulative'])
-            # for things in obs.observation:
-            #     print(things, obs.observation[things])
-            connection.PostGame(obs)
+            connection.PostGame(obs,agentid)
         action = agent.step(obs)
         action = pickle.dumps(action)
         readSize = sys.getsizeof(action)
@@ -46,7 +58,7 @@ def handle_client_connection(client_socket):
         # print(readSize)
         client_socket.sendall(action)
         obs = None
-        step += 1
+        # step += 1
     # print(obs)
 
 while True:

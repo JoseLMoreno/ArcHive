@@ -8,13 +8,14 @@ def AddGame(*args):
     db = engine.raw_connection().connection 
     cursor = db.cursor()
     print(*args)
-    cursor.execute("""INSERT INTO Games (ReplayFile, PlayerOne, PlayerTwo, Victor, Score, GameLength, PlayerOneRace, PlayerTwoRace)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)""", *args)
-    
+    # cursor.execute("""INSERT INTO Games (ReplayFile, PlayerOne, PlayerTwo, Victor, Score, GameLength, PlayerOneRace, PlayerTwoRace)
+    # VALUES (?, ?, ?, ?, ?, ?, ?, ?)""", *args)
+    cursor.execute("{CALL AddGame (?, ?, ?, ?, ?, ?, ?, ?)}""", *args)
+    cursor.commit()
 
-def PostGame(obs):
+def PostGame(obs, agent):
     ReplayFile = 'Not Implemented'
-    PlayerOne = 1
+    PlayerOne = agent
     PlayerTwo = None
     Victor = None
     if obs.reward == -1:
@@ -25,4 +26,21 @@ def PostGame(obs):
     GameLength = obs.observation['game_loop'][0]
     PlayerOneRace = 'T'
     PlayerTwoRace = 'R'
-    AddGame([ReplayFile, PlayerOne, PlayerTwo, Victor, Score, GameLength, PlayerOneRace, PlayerTwoRace])
+    try:
+        AddGame([ReplayFile, PlayerOne, PlayerTwo, Victor, int(Score), int(GameLength), PlayerOneRace, PlayerTwoRace])
+    finally:
+        pass
+
+def GameHistory(name):
+    request = """
+    SELECT * FROM dbo.Games
+    WHERE PlayerOne in (
+        SELECT AgentID FROM Agents
+        WHERE AgentDescription = ?
+    )"""
+    db = engine.raw_connection().connection 
+    cursor = db.cursor()
+    cursor.execute(request, name)
+    history = cursor.fetchall()
+
+    return history
