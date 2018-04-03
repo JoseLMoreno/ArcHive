@@ -1,5 +1,6 @@
 import random
 import math
+import os.path
 
 import numpy as np
 import pandas as pd
@@ -38,6 +39,8 @@ ACTION_SELECT_BARRACKS = 'selectbarracks'
 ACTION_BUILD_MARINE = 'buildmarine'
 ACTION_SELECT_ARMY = 'selectarmy'
 ACTION_ATTACK = 'attack'
+
+DATA_FILE = 'smart_agent_data'
 
 smart_actions = [
     ACTION_DO_NOTHING,
@@ -105,6 +108,8 @@ class SmartAgent(base_agent.BaseAgent):
         
         self.previous_action = None
         self.previous_state = None
+        if os.path.isfile(DATA_FILE + '.gz'):
+            self.qlearn.q_table = pd.read_pickle(DATA_FILE + '.gz', compression='gzip')
         
     def transformLocation(self, x, x_distance, y, y_distance):
         if not self.base_top_left:
@@ -114,7 +119,8 @@ class SmartAgent(base_agent.BaseAgent):
         
     def step(self, obs):
         super(SmartAgent, self).step(obs)
-        
+        if obs.last():
+            self.qlearn.q_table.to_pickle(DATA_FILE + '.gz', 'gzip')
         player_y, player_x = (obs.observation['minimap'][_PLAYER_RELATIVE] == _PLAYER_SELF).nonzero()
         self.base_top_left = 1 if player_y.any() and player_y.mean() <= 31 else 0
         

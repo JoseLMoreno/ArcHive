@@ -35,12 +35,12 @@ def handle_client_connection(client_socket):
     history = connection.GameHistory(chunk)
     
     history = pickle.dumps(history)
-    print(history)
+    # print(history)
     readSize = sys.getsizeof(history)
     client_socket.send(str(readSize).encode())
     time.sleep(0.01)
     client_socket.send(history)
-    print(threading.get_ident())
+    # print(threading.get_ident())
 
     while True:
         readSize = int(client_socket.recv(sys.getsizeof(int)))
